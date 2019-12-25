@@ -87,8 +87,9 @@ jobs:
           git branch --set-upstream-to=origin/master master
           mv luci-app-openclash/* .
           rmdir luci-app-openclash
-          cd tools/po2lmo
+          pushd tools/po2lmo
           make && sudo make install
+          popd
           
       - name: Update Target.mk
         run: |
