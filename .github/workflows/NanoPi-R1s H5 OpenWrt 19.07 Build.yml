@@ -84,7 +84,9 @@ jobs:
           echo "luci-app-openclash" >> .git/info/sparse-checkout
           git pull origin master
           git branch --set-upstream-to=origin/master master
-          cd friendlywrt-h5/friendlywrt/package/luci-app-openclash/luci-app-openclash/tools/po2lmo
+          mv luci-app-openclash/* .
+          rmdir luci-app-openclash
+          cd tools/po2lmo
           make && sudo make install
           
       - name: Update Target.mk
