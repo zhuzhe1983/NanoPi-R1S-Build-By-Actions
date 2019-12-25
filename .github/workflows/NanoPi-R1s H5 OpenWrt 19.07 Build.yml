@@ -73,7 +73,16 @@ jobs:
         run: |
           cd friendlywrt-h5/friendlywrt/package
           git clone https://github.com/Baozisoftware/luci-app-koolproxy
-      
+
+      - name: Turn on BBR
+        run: |
+          mkdir -p friendlywrt-h5/friendlywrt/package/base-files/files/etc/modules.d
+          cd friendlywrt-h5/friendlywrt/package/base-files/files/etc/modules.d
+          echo "tcp_bbr" > bbr
+          mkdir -p friendlywrt-h5/friendlywrt/package/base-files/files/etc/sysctl.d
+          cd friendlywrt-h5/friendlywrt/package/base-files/files/etc/sysctl.d
+          echo -e "net.ipv4.tcp_congestion_control=bbr\nnet.core.default_qdisc=fq" > 12-tcp-bbr.conf
+
       - name: Open Clash
         run: |
           cd friendlywrt-h5/friendlywrt/package
@@ -116,13 +125,6 @@ jobs:
           make download -j8
           find dl -size -1024c -exec ls -l {} \;
           find dl -size -1024c -exec rm -f {} \;
-
-      - name: Turn on BBR
-        run: |
-          cd friendlywrt-h5/friendlywrt/package/base-files/files/etc/modules.d
-          echo "tcp_bbr" > bbr
-          cd friendlywrt-h5/friendlywrt/package/base-files/files/etc/sysctl.d
-          echo -e "net.ipv4.tcp_congestion_control=bbr\nnet.core.default_qdisc=fq" > 12-tcp-bbr.conf
 
       - name: Build OpenWrt
         run: |
