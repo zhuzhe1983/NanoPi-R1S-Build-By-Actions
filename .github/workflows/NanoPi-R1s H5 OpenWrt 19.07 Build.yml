@@ -93,7 +93,8 @@ jobs:
           echo "tcp_bbr" > bbr
           mkdir -p friendlywrt-h5/friendlywrt/package/base-files/files/etc/sysctl.d
           cd friendlywrt-h5/friendlywrt/package/base-files/files/etc/sysctl.d
-          echo -e "net.ipv4.tcp_congestion_control=bbr\nnet.core.default_qdisc=fq" > 12-tcp-bbr.conf
+          echo "net.ipv4.tcp_congestion_control=bbr" > 12-tcp-bbr.conf
+          echo "net.core.default_qdisc=fq" >> 12-tcp-bbr.conf
 
       - name: Update Target.mk
         run: |
