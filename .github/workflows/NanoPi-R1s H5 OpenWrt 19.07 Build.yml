@@ -72,7 +72,7 @@ jobs:
       - name: Luci for Clash
         run: |
           cd friendlywrt-h5/friendlywrt/package
-          git clone https://github.com/frainzy1477/luci-app-clash
+          git clone https://github.com/peter-tank/luci-app-clash
 
       - name: Turn on BBR
         run: |
