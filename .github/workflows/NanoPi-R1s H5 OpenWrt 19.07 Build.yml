@@ -76,16 +76,6 @@ jobs:
           cd luci-app-clash
           git checkout patcher
 
-      - name: Turn on BBR
-        run: |
-          mkdir -p friendlywrt-h5/friendlywrt/package/base-files/files/etc/modules.d
-          cd friendlywrt-h5/friendlywrt/package/base-files/files/etc/modules.d
-          echo "tcp_bbr" > bbr
-          mkdir -p friendlywrt-h5/friendlywrt/package/base-files/files/etc/sysctl.d
-          cd friendlywrt-h5/friendlywrt/package/base-files/files/etc/sysctl.d
-          echo "net.ipv4.tcp_congestion_control=bbr" > 12-tcp-bbr.conf
-          echo "net.core.default_qdisc=fq" >> 12-tcp-bbr.conf
-
       - name: Update Target.mk
         run: |
           cd friendlywrt-h5/friendlywrt/include 
