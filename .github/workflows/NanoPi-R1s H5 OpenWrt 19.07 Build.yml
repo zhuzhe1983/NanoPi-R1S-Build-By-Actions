@@ -1,23 +1,7 @@
-#
-# This is free software, lisence use MIT.
-# 
-# Copyright (C) 2019 Jolly <https://totoro.site>
-# 
-# <https://github.com/skytotwo/NanoPi-R1S-Build-By-Actions>
-#
-# Write by Jolly 2019/12/7
-# last update at 2019/12/19
-
-name: NanoPi-R1s H5 OpenWrt 19.07 Build
-
 on:
   push:
-    branches: 
-      - master
-  # schedule:
-  #   - cron: 0 20 * * *
-  # release:
-  #   types: [published]
+    paths:
+      - 'Version'
 
 jobs:
 
@@ -32,13 +16,14 @@ jobs:
         with:
           ref: master
 
-      - name: Initialization Environment
+      - name: Initialize Environment
         env:
           DEBIAN_FRONTEND: noninteractive
         run: |
           sudo apt-get update
           sudo rm -rf /usr/share/dotnet /usr/local/lib/android/sdk
           docker image prune -a -f
+          sudo apt-get -y install upx-ucl
           sudo apt-get -y purge dotnet* ghc* google* llvm* mysql* php* zulu* firefox hhvm powershell
           sudo apt-get -y autoremove --purge          
           wget -O - https://raw.githubusercontent.com/friendlyarm/build-env-on-ubuntu-bionic/master/install.sh | bash
@@ -71,19 +56,25 @@ jobs:
           git clone https://github.com/coolsnowwolf/lede
           cd friendlywrt
           cp -r ../lede/package/lean package/
-          sed -i 's/https:\/\/git.openwrt.org\/project\/luci.git^adbbd5cf690cf993e0de1e56266ac6fd2b2dfe91/https:\/\/github.com\/coolsnowwolf\/luci/' feeds.conf.default
-          sed -i 's/https:\/\/git.openwrt.org\/feed\/packages.git^1ec76dd7ca647f76a75c4f88b3b70d154221e7e9/https:\/\/github.com\/coolsnowwolf\/packages/' feeds.conf.default      
+          sed -i 's/^src-git luci.*/src-git luci https:\/\/github.com\/coolsnowwolf\/luci/' feeds.conf.default
+          sed -i 's/^src-git packages.*/src-git packages https:\/\/github.com\/coolsnowwolf\/packages/' feeds.conf.default
       
       - name: Luci for Clash
         run: |
           cd friendlywrt-h5/friendlywrt/package
           git clone https://github.com/frainzy1477/luci-app-clash
+
+      - name: Install Clash Binaries
+        run: |
           mkdir -p friendlywrt-h5/friendlywrt/package/base-files/files/etc/clash
           cd friendlywrt-h5/friendlywrt/package/base-files/files/etc/clash
           wget https://github.com/frainzy1477/clash_dev/releases/download/v0.17.2/clash-linux-armv8-v0.17.2.gz
           gunzip clash-linux-armv8-v0.17.2.gz
           chmod +x clash-linux-armv8-v0.17.2
           mv clash-linux-armv8-v0.17.2 clash
+
+      - name: Set Clash Version
+        run: |
           mkdir -p friendlywrt-h5/friendlywrt/package/base-files/files/usr/share/clash
           cd friendlywrt-h5/friendlywrt/package/base-files/files/usr/share/clash
           echo 0.17.2 > core_version
@@ -99,20 +90,24 @@ jobs:
           ./scripts/feeds update -a
           ./scripts/feeds install -a
           
-      - name: Costom Configure File
+      - name: Custom Configure Files
         run: |
           cd friendlywrt-h5/friendlywrt
           rm -f ./.config*
           wget https://raw.githubusercontent.com/soffchen/NanoPi-R1S-Build-By-Actions/master/r1s-h5-config
           cp r1s-h5-config .config
 
-      - name: Download package
+      - name: Download Packages
         if: always()
         run: |
           cd friendlywrt-h5/friendlywrt
           make download -j8
           find dl -size -1024c -exec ls -l {} \;
           find dl -size -1024c -exec rm -f {} \;
+
+      - name: Install UPX
+        run: |
+          ln -s /usr/bin/upx-ucl friendlywrt-rk3328/friendlywrt/staging_dir/host/bin/upx
 
       - name: Build OpenWrt
         run: |
