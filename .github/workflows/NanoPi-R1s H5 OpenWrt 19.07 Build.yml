@@ -42,13 +42,9 @@ jobs:
       
       - name: Merge UpStearm OpenWrt
         run: |
-          cd friendlywrt-h5
-          cd .repo/manifests
-          rm -f ./h5.xml
-          wget https://raw.githubusercontent.com/soffchen/NanoPi-R1S-Build-By-Actions/master/source_xml/h5_19.07.xml
-          cp h5_19.07.xml h5.xml
-          rm -rf ./h5_19.07.xml
-          repo sync -c  --no-clone-bundle
+          cd friendlywrt-h5/.repo/manifests
+          cp ../../../source_xml/h5_19.07.xml h5.xml
+          repo sync -c --no-clone-bundle
       
       - name: Merge LEDE
         run: |
@@ -59,25 +55,38 @@ jobs:
           sed -i 's/^src-git luci.*/src-git luci https:\/\/github.com\/coolsnowwolf\/luci/' feeds.conf.default
           sed -i 's/^src-git packages.*/src-git packages https:\/\/github.com\/coolsnowwolf\/packages/' feeds.conf.default
       
-      - name: Luci for Clash
+      - name: Install Luci for Clash
         run: |
-          cd friendlywrt-h5/friendlywrt/package
+          cd friendlywrt-rk3328/friendlywrt/package
           git clone https://github.com/frainzy1477/luci-app-clash
+
+      - name: Install OpenClash
+        run: |
+          git clone https://github.com/vernesong/OpenClash.git tmp
+          mv tmp/luci-app-openclash friendlywrt-rk3328/friendlywrt/package
+          rm -rf tmp
 
       - name: Install Clash Binaries
         run: |
-          mkdir -p friendlywrt-h5/friendlywrt/package/base-files/files/etc/clash
-          cd friendlywrt-h5/friendlywrt/package/base-files/files/etc/clash
-          wget https://github.com/frainzy1477/clash_dev/releases/download/v0.17.2/clash-linux-armv8-v0.17.2.gz
-          gunzip clash-linux-armv8-v0.17.2.gz
-          chmod +x clash-linux-armv8-v0.17.2
-          mv clash-linux-armv8-v0.17.2 clash
+          mkdir -p friendlywrt-rk3328/friendlywrt/package/base-files/files/etc/clash
+          cd friendlywrt-rk3328/friendlywrt/package/base-files/files/etc/clash
+          wget https://github.com/Dreamacro/clash/releases/download/v0.18.0/clash-linux-armv8-v0.18.0.gz
+          gunzip clash-linux-armv8-v0.18.0.gz
+          chmod +x clash-linux-armv8-v0.18.0
+          mv clash-linux-armv8-v0.18.0 clash
+          mkdir ../openclash
+          cp clash ../openclash/
 
       - name: Set Clash Version
         run: |
-          mkdir -p friendlywrt-h5/friendlywrt/package/base-files/files/usr/share/clash
-          cd friendlywrt-h5/friendlywrt/package/base-files/files/usr/share/clash
-          echo 0.17.2 > core_version
+          mkdir -p friendlywrt-rk3328/friendlywrt/package/base-files/files/usr/share/clash
+          cd friendlywrt-rk3328/friendlywrt/package/base-files/files/usr/share/clash
+          echo 0.18.0 > core_version
+
+      - name: Install AdGuard Home
+        run: |
+          cd friendlywrt-rk3328/friendlywrt/package
+          git clone https://github.com/rufengsuixing/luci-app-adguardhome.git
 
       - name: Update Target.mk
         run: |
@@ -89,21 +98,23 @@ jobs:
           cd friendlywrt-h5/friendlywrt
           ./scripts/feeds update -a
           ./scripts/feeds install -a
-          
+
+      - name: Install Mods
+        run: |
+          cd friendlywrt-h5
+          sed -i '/CONFIG_IB/d;/CONFIG_SDK/d;/CONFIG_BUILDBOT/d;/CONFIG_ALL_KMODS/d;/CONFIG_ALL_NONSHARED/d' configs/config_h5
+          sed -i '/iptparser/d;/docker/d;/DOCKER/d;/CONFIG_DISPLAY_SUPPORT/d;/CONFIG_AUDIO_SUPPORT/d' configs/config_h5
+          sed -i '/Load Average/i\\t\t<tr><td width="33%"><%:CPU Temperature%></td><td><%=luci.sys.exec("cut -c1-2 /sys/class/thermal/thermal_zone0/temp")%></td></tr>' friendlywrt/feeds/luci/modules/luci-mod-admin-full/luasrc/view/admin_status/index.htm
+          sed -i 's/pcdata(boardinfo.system or "?")/"ARMv8"/' friendlywrt/feeds/luci/modules/luci-mod-admin-full/luasrc/view/admin_status/index.htm
+          sed -i "/redirect_https/d" friendlywrt/package/network/services/uhttpd/files/uhttpd.config
+          sed -i 's/1.19.0/1.20.0/g' friendlywrt/feeds/packages/admin/netdata/Makefile
+          sed -i 's/007656f639d3544698af503f35550aeb4d4d5a06b81801bf5acf4ac21db68f6e/c739e0fa8d6d7f433c0c7c8016b763e8f70519d67f0b5e7eca9ee5318f210d90/g' friendlywrt/feeds/packages/admin/netdata/Makefile
+          sed -i 's/+libjson-c/+libjson-c +libuv/' friendlywrt/feeds/packages/admin/netdata/Makefile
+
       - name: Custom Configure Files
         run: |
-          cd friendlywrt-h5/friendlywrt
-          rm -f ./.config*
-          wget https://raw.githubusercontent.com/soffchen/NanoPi-R1S-Build-By-Actions/master/r1s-h5-config
-          cp r1s-h5-config .config
-
-      - name: Download Packages
-        if: always()
-        run: |
-          cd friendlywrt-h5/friendlywrt
-          make download -j8
-          find dl -size -1024c -exec ls -l {} \;
-          find dl -size -1024c -exec rm -f {} \;
+          rm -f friendlywrt-h5/friendlywrt/.config*
+          cp r1s-h5-config friendlywrt-h5/friendlywrt/.config
 
       - name: Install UPX
         run: |
@@ -116,7 +127,7 @@ jobs:
       
       - name: Zip Files
         run: |
-          find friendlywrt-h5/out/ -name "FriendlyWrt_*img*" | xargs -i zip -r {}.zip {}
+          find friendlywrt-h5/out/ -name "FriendlyWrt_*img*" | xargs -i -1 zip -r {}.zip {}
           
       - name: Assemble Artifact
         run: |
