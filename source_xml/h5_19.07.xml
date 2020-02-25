@@ -3,10 +3,6 @@
   <remote name="origin"
           fetch="."
           revision="refs/heads/master" />
-  <remote name="v18061"
-          fetch="."
-          revision="refs/heads/master-v18.06.1" />
-  <remote name="self" fetch="https://github.com/skytotwo" />
 	
   <remote name="self-sd-size" fetch="https://github.com/skytotwo" revision="refs/heads/master"/>
 
@@ -19,8 +15,8 @@
   </project>
 
   <!-- friendlyelec device configs -->
-  <project path="device/friendlyelec" name="friendlywrt_device_h5" remote="v18061" />
-  <project path="configs" name="friendlywrt_configs" remote="v18061" />
+  <project path="device/friendlyelec" name="friendlywrt_device_h5" remote="origin" />
+  <project path="configs" name="friendlywrt_configs" remote="origin" revision="refs/heads/master-v19.07.1" />
 
   <!-- friendlyelec scripts -->
   <project path="scripts" name="friendlywrt_scripts" remote="origin">
@@ -28,7 +24,7 @@
   </project>
 
   <!-- friendlywrt source code -->
-  <project path="friendlywrt" name="friendlywrt" remote="self" revision="refs/heads/master-v19.07.1" />
+  <project path="friendlywrt" name="friendlywrt" remote="origin" revision="refs/heads/master-v19.07.1" />
 
   <!-- toolchain -->
   <project path="toolchain" name="prebuilts" remote="origin" revision="refs/heads/master" />
